@@ -1,0 +1,17 @@
+[plugin]
+name = "fledge-plugin-coverage"
+version = "0.2.0"
+description = "Run language-native test coverage and gate on a threshold. Built in Rust."
+author = "CorvidLabs"
+protocol = "fledge-v1"
+
+[capabilities]
+exec = true
+
+[[commands]]
+name = "coverage"
+description = "Run test coverage for the project, optionally gate on a threshold"
+binary = "bin/fledge-coverage"
+
+[hooks]
+build = "bin/build.sh"
