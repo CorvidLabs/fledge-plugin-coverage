@@ -278,3 +278,231 @@ fn emit_json_error(msg: &str) {
     })).unwrap());
     output("\n");
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::fs;
+    use tempfile::TempDir;
+
+    // ---- extract_percent -------------------------------------------------------
+
+    #[test]
+    fn rust_coverage_parsing() {
+        let output = "\
+Filename                      Regions    Missed Regions     Cover   Functions  Missed Functions  Executed       Lines      Missed Lines     Cover    Branches   Missed Branches     Cover
+---
+src/main.rs                        42                 5    88.10%          10                 1    90.00%         200               20    90.00%          0                 0         -
+---
+TOTAL                              42                 5    88.10%          10                 1    90.00%         200               20    90.00%          0                 0         -";
+        let pattern = COMMANDS[0].2; // rust
+        let pct = extract_percent(output, pattern);
+        assert_eq!(pct, Some(90.0));
+    }
+
+    #[test]
+    fn python_coverage_parsing() {
+        let output = "\
+Name                    Stmts   Miss  Cover
+-------------------------------------------
+src/__init__.py             0      0   100%
+src/main.py                50     10    80%
+-------------------------------------------
+TOTAL                      50     10    80%";
+        let pattern = COMMANDS[1].2; // python
+        let pct = extract_percent(output, pattern);
+        assert_eq!(pct, Some(80.0));
+    }
+
+    #[test]
+    fn go_coverage_parsing() {
+        let output = "\
+ok  \tgithub.com/example/pkg\t0.015s\tcoverage: 72.5% of statements";
+        let pattern = COMMANDS[4].2; // go
+        let pct = extract_percent(output, pattern);
+        assert_eq!(pct, Some(72.5));
+    }
+
+    #[test]
+    fn node_coverage_parsing() {
+        let output = "\
+----------|---------|----------|---------|---------|-------------------
+File      | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s
+----------|---------|----------|---------|---------|-------------------
+All files |   85.71 |      100 |   66.67 |   85.71 |
+----------|---------|----------|---------|---------|-------------------";
+        let pattern = COMMANDS[3].2; // node
+        let pct = extract_percent(output, pattern);
+        assert_eq!(pct, Some(85.71));
+    }
+
+    #[test]
+    fn bun_coverage_parsing() {
+        let output = "\
+----------|---------|----------|---------|---------|
+All files |   92.30 |      100 |   90.00 |   92.30 |
+----------|---------|----------|---------|---------|";
+        let pattern = COMMANDS[2].2; // bun
+        let pct = extract_percent(output, pattern);
+        assert_eq!(pct, Some(92.30));
+    }
+
+    #[test]
+    fn extract_percent_no_match() {
+        let pct = extract_percent("no coverage here", r"coverage:\s+([\d\.]+)%");
+        assert_eq!(pct, None);
+    }
+
+    // ---- parse_args ------------------------------------------------------------
+
+    #[test]
+    fn parse_args_empty() {
+        let opts = parse_args(&[]);
+        assert!(!opts.json);
+        assert_eq!(opts.threshold, None);
+        assert_eq!(opts.lang, None);
+    }
+
+    #[test]
+    fn parse_args_json_flag() {
+        let args = vec!["--json".to_string()];
+        let opts = parse_args(&args);
+        assert!(opts.json);
+    }
+
+    #[test]
+    fn parse_args_threshold() {
+        let args = vec!["--threshold".to_string(), "80".to_string()];
+        let opts = parse_args(&args);
+        assert_eq!(opts.threshold, Some(80.0));
+    }
+
+    #[test]
+    fn parse_args_threshold_float() {
+        let args = vec!["--threshold".to_string(), "72.5".to_string()];
+        let opts = parse_args(&args);
+        assert_eq!(opts.threshold, Some(72.5));
+    }
+
+    #[test]
+    fn parse_args_lang() {
+        let args = vec!["--lang".to_string(), "python".to_string()];
+        let opts = parse_args(&args);
+        assert_eq!(opts.lang, Some("python".to_string()));
+    }
+
+    #[test]
+    fn parse_args_all_combined() {
+        let args = vec![
+            "--json".to_string(),
+            "--threshold".to_string(),
+            "90".to_string(),
+            "--lang".to_string(),
+            "rust".to_string(),
+        ];
+        let opts = parse_args(&args);
+        assert!(opts.json);
+        assert_eq!(opts.threshold, Some(90.0));
+        assert_eq!(opts.lang, Some("rust".to_string()));
+    }
+
+    #[test]
+    fn parse_args_threshold_missing_value() {
+        let args = vec!["--threshold".to_string()];
+        let opts = parse_args(&args);
+        assert_eq!(opts.threshold, None);
+    }
+
+    // ---- detect_lang -----------------------------------------------------------
+
+    #[test]
+    fn detect_rust_project() {
+        let dir = TempDir::new().unwrap();
+        fs::write(dir.path().join("Cargo.toml"), "").unwrap();
+        let lang = detect_lang(dir.path().to_str().unwrap());
+        assert_eq!(lang, Some("rust".to_string()));
+    }
+
+    #[test]
+    fn detect_python_project() {
+        let dir = TempDir::new().unwrap();
+        fs::write(dir.path().join("pyproject.toml"), "").unwrap();
+        let lang = detect_lang(dir.path().to_str().unwrap());
+        assert_eq!(lang, Some("python".to_string()));
+    }
+
+    #[test]
+    fn detect_go_project() {
+        let dir = TempDir::new().unwrap();
+        fs::write(dir.path().join("go.mod"), "").unwrap();
+        let lang = detect_lang(dir.path().to_str().unwrap());
+        assert_eq!(lang, Some("go".to_string()));
+    }
+
+    #[test]
+    fn detect_node_project() {
+        let dir = TempDir::new().unwrap();
+        fs::write(dir.path().join("package.json"), "{}").unwrap();
+        let lang = detect_lang(dir.path().to_str().unwrap());
+        assert_eq!(lang, Some("node".to_string()));
+    }
+
+    #[test]
+    fn detect_bun_project() {
+        let dir = TempDir::new().unwrap();
+        fs::write(dir.path().join("bun.lockb"), "").unwrap();
+        let lang = detect_lang(dir.path().to_str().unwrap());
+        assert_eq!(lang, Some("bun".to_string()));
+    }
+
+    #[test]
+    fn detect_bun_over_node() {
+        // bun.lockb + package.json should detect as bun (bun checked first)
+        let dir = TempDir::new().unwrap();
+        fs::write(dir.path().join("bun.lockb"), "").unwrap();
+        fs::write(dir.path().join("package.json"), "{}").unwrap();
+        let lang = detect_lang(dir.path().to_str().unwrap());
+        assert_eq!(lang, Some("bun".to_string()));
+    }
+
+    #[test]
+    fn detect_unknown_project() {
+        let dir = TempDir::new().unwrap();
+        let lang = detect_lang(dir.path().to_str().unwrap());
+        assert_eq!(lang, None);
+    }
+
+    // ---- threshold gate logic --------------------------------------------------
+
+    #[test]
+    fn gate_passes_above_threshold() {
+        let threshold = Some(80.0);
+        let pct = Some(85.0);
+        let gate_failed = matches!((threshold, pct), (Some(t), Some(p)) if p < t);
+        assert!(!gate_failed);
+    }
+
+    #[test]
+    fn gate_fails_below_threshold() {
+        let threshold = Some(80.0);
+        let pct = Some(75.0);
+        let gate_failed = matches!((threshold, pct), (Some(t), Some(p)) if p < t);
+        assert!(gate_failed);
+    }
+
+    #[test]
+    fn gate_passes_at_threshold() {
+        let threshold = Some(80.0);
+        let pct = Some(80.0);
+        let gate_failed = matches!((threshold, pct), (Some(t), Some(p)) if p < t);
+        assert!(!gate_failed);
+    }
+
+    #[test]
+    fn gate_no_threshold_always_passes() {
+        let threshold: Option<f64> = None;
+        let pct = Some(50.0);
+        let gate_failed = matches!((threshold, pct), (Some(t), Some(p)) if p < t);
+        assert!(!gate_failed);
+    }
+}
