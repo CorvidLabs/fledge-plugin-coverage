@@ -78,17 +78,25 @@ fn main() {
     }
 
     let project = init.project;
-    let root = project.as_ref().and_then(|p| p.root.clone()).unwrap_or_else(|| ".".into());
+    let root = project
+        .as_ref()
+        .and_then(|p| p.root.clone())
+        .unwrap_or_else(|| ".".into());
     let project_lang = project.as_ref().and_then(|p| p.language.clone());
 
-    let lang = opts.lang.clone()
+    let lang = opts
+        .lang
+        .clone()
         .or(project_lang)
         .or_else(|| detect_lang(&root));
 
     let lang = match lang.as_deref() {
         Some(l) if COMMANDS.iter().any(|(name, _, _)| *name == l) => l.to_string(),
         _ => {
-            let msg = format!("Could not detect a supported language in {} (try --lang)", root);
+            let msg = format!(
+                "Could not detect a supported language in {} (try --lang)",
+                root
+            );
             if opts.json {
                 emit_json_error(&msg);
             } else {
@@ -153,9 +161,17 @@ const COMMANDS: &[(&str, &str, &str)] = &[
         // Match the lines column on the TOTAL row: ... Cover ... Cover NN.NN%
         r"TOTAL\s+\d+\s+\d+\s+[\d\.]+%\s+\d+\s+\d+\s+[\d\.]+%\s+\d+\s+\d+\s+([\d\.]+)%",
     ),
-    ("python", "pytest --cov=. --cov-report=term", r"TOTAL\s+\d+\s+\d+\s+([\d\.]+)%"),
+    (
+        "python",
+        "pytest --cov=. --cov-report=term",
+        r"TOTAL\s+\d+\s+\d+\s+([\d\.]+)%",
+    ),
     ("bun", "bun test --coverage", r"All files\s*\|\s*([\d\.]+)"),
-    ("node", "npx jest --coverage --coverageReporters=text", r"All files\s*\|\s*([\d\.]+)"),
+    (
+        "node",
+        "npx jest --coverage --coverageReporters=text",
+        r"All files\s*\|\s*([\d\.]+)",
+    ),
     ("go", "go test -cover ./...", r"coverage:\s+([\d\.]+)%"),
 ];
 
@@ -189,7 +205,11 @@ fn extract_percent(text: &str, pattern: &str) -> Option<f64> {
 }
 
 fn parse_args(args: &[String]) -> Options {
-    let mut opts = Options { json: false, threshold: None, lang: None };
+    let mut opts = Options {
+        json: false,
+        threshold: None,
+        lang: None,
+    };
     let mut i = 0;
     while i < args.len() {
         match args[i].as_str() {
@@ -270,12 +290,15 @@ fn log_warn(message: &str) {
 }
 
 fn emit_json_error(msg: &str) {
-    output(&serde_json::to_string(&json!({
-        "schema_version": 1,
-        "action": "coverage",
-        "ok": false,
-        "error": msg,
-    })).unwrap());
+    output(
+        &serde_json::to_string(&json!({
+            "schema_version": 1,
+            "action": "coverage",
+            "ok": false,
+            "error": msg,
+        }))
+        .unwrap(),
+    );
     output("\n");
 }
 
