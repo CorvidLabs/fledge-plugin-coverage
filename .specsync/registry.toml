@@ -1,0 +1,5 @@
+[registry]
+name = "fledge-plugin-coverage-trust-wave3"
+
+[specs]
+coverage = "specs/coverage/coverage.spec.md"
