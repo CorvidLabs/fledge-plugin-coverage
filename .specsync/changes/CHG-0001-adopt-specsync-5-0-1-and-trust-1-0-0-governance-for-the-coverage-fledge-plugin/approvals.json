@@ -1,0 +1,18 @@
+{
+  "approvals": [
+    {
+      "gate": "definition",
+      "actor": "user:0xLeif",
+      "timestamp": 1783951318,
+      "digest": "553cbf56ae2b2c4a0d189b92f53e9c250b3088db08c7e4df0105a61798bd2063",
+      "note": "Definition approved for the SpecSync 5.0.1 and Trust 1.0.0 rollout after artifact and native-check review."
+    },
+    {
+      "gate": "acceptance",
+      "actor": "user:0xLeif",
+      "timestamp": 1783951456,
+      "digest": "02bff1834984ac87ab32c41bb9d044b63146bf33ed97df7c085f565675ca0687",
+      "note": "Closing approval recorded after successful native verification at the committed implementation head."
+    }
+  ]
+}

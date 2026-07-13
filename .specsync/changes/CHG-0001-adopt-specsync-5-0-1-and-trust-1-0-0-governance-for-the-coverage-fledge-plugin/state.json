@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "id": "CHG-0001-adopt-specsync-5-0-1-and-trust-1-0-0-governance-for-the-coverage-fledge-plugin",
+  "slug": "adopt-specsync-5-0-1-and-trust-1-0-0-governance-for-the-coverage-fledge-plugin",
+  "title": "Adopt SpecSync 5.0.1 and Trust 1.0.0 governance for the Coverage Fledge plugin",
+  "description": "Adopt SpecSync 5.0.1 and Trust 1.0.0 governance for the Coverage Fledge plugin",
+  "kind": "migration",
+  "state": "accepted",
+  "base_commit": "36c391f9ab550163954af42902217b4fd57c411c",
+  "created_at": 1783876068,
+  "updated_at": 1783951456,
+  "affected_specs": [],
+  "affected_paths": [
+    "src/",
+    ".github/",
+    ".specsync/",
+    "specs/",
+    ".trust.toml",
+    "fledge.toml"
+  ],
+  "no_spec_change": true,
+  "no_spec_change_rationale": "The migration documents existing Coverage behavior and adds governance configuration without changing runtime semantics.",
+  "acceptance_criteria": [
+    "SpecSync strict check passes at 100 percent; all four integrations report installed; Trust doctor and verification pass; formatting",
+    "Clippy",
+    "and all 24 tests remain green"
+  ],
+  "selected_artifacts": [
+    "context",
+    "research",
+    "design",
+    "plan",
+    "tasks",
+    "testing",
+    "docs"
+  ],
+  "dependencies": [],
+  "answers": {
+    "architecture_risk": "yes",
+    "public_contract": "no"
+  }
+}
