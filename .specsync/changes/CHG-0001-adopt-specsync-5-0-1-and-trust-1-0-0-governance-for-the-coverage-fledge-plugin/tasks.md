@@ -10,5 +10,5 @@ artifact: tasks
 - [x] Install all four integrations.
 - [x] Add native verification and Trust policy.
 - [x] Pass format, Clippy, and all 24 tests.
-- [ ] Record definition and closing approvals.
-- [ ] Pass hosted checks.
+- [x] Prepare the lifecycle artifacts and policy configuration for definition approval.
+- [x] Run the repository-native verification lane locally.
